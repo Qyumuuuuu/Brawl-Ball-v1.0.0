@@ -1,0 +1,140 @@
+<html style="margin:0;padding:0;">
+<title>原神·元素角斗场系统架构</title>
+<div style="box-sizing:border-box;width:100%;background:#0b1420;color:#e8e2d4;font-family:'Noto Sans SC','Microsoft YaHei',system-ui,sans-serif;padding:24px 20px 28px;">
+  <style>*{box-sizing:border-box}</style>
+  <!-- 标题 -->
+  <div style="text-align:center;margin-bottom:6px;">
+    <div style="font-size:24px;font-weight:900;letter-spacing:.06em;color:#f2d389;font-family:'Noto Serif SC','SimSun',serif;text-shadow:0 0 16px rgba(242,211,137,.35);">原神 · 元素角斗场 — 系统架构</div>
+    <div style="font-size:13px;color:#a9b2bd;margin-top:6px;">单文件 HTML（1718 行）· 数据表 + Game 引擎（rAF 主循环） + 三视图 UI</div>
+  </div>
+
+  <!-- 图例 -->
+  <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;font-size:12px;color:#a9b2bd;margin:14px 0 18px;">
+    <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:3px;background:#122238;border:1px solid #c9a959;display:inline-block;"></span>模块 / 层</span>
+    <span style="display:flex;align-items:center;gap:6px;"><span style="color:#d9b56c;font-weight:700;">→</span> 数据流 / 调用</span>
+    <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:#c9a959;display:inline-block;"></span>关键机制节点</span>
+    <span style="display:flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:#e0533d;display:inline-block;"></span><span style="width:12px;height:12px;border-radius:50%;background:#4a8fe0;display:inline-block;"></span>红 / 蓝队</span>
+  </div>
+
+  <!-- ===== 分层架构 ===== -->
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:980px;margin:0 auto;">
+
+    <!-- L1 视图层 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(201,169,89,.14);border:1px solid rgba(201,169,89,.5);border-radius:8px;font-size:13px;font-weight:700;color:#d9b56c;padding:8px;">L1 视图层</div>
+      <div style="flex:1;min-width:260px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;color:#f2d389;">选人视图</div><div style="font-size:11px;color:#a9b2bd;">入队 / 调参 / 场地</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;color:#f2d389;">战斗视图</div><div style="font-size:11px;color:#a9b2bd;">HUD · 技能栏 · Canvas</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;color:#f2d389;">结算视图</div><div style="font-size:11px;color:#a9b2bd;">胜负 · MVP · 统计</div></div>
+        <div style="flex:1;min-width:170px;background:#101d2e;border:1px dashed rgba(201,169,89,.4);border-radius:8px;padding:8px 10px;font-size:12px;color:#a9b2bd;"><span style="color:#f2d389;font-weight:700;">输入</span>：点击选中 · 滑杆调血量/伤害 · 键盘 Space 暂停 / E·Q 施放</div>
+      </div>
+    </div>
+
+    <!-- L2 配置层 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(201,169,89,.14);border:1px solid rgba(201,169,89,.5);border-radius:8px;font-size:13px;font-weight:700;color:#d9b56c;padding:8px;">L2 配置层</div>
+      <div style="flex:1;min-width:260px;display:flex;flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:140px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:13px;font-weight:700;">场地尺寸</div><div style="font-size:11px;color:#a9b2bd;">800~2400 × 500~1400</div></div>
+        <div style="flex:1;min-width:140px;background:#122238;border:1px solid rgba(224,83,61,.45);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#ff8a72;">红队 ×4</div><div style="font-size:11px;color:#a9b2bd;">血量 / 伤害可调</div></div>
+        <div style="flex:1;min-width:140px;background:#122238;border:1px solid rgba(74,143,224,.45);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#7ab6f5;">蓝队 ×4</div><div style="font-size:11px;color:#a9b2bd;">血量 / 伤害可调</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:13px;font-weight:700;">素材预加载</div><div style="font-size:11px;color:#a9b2bd;">36 头像 · 缺图兜底不卡开始</div></div>
+      </div>
+    </div>
+
+    <!-- L3 数据层 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(201,169,89,.14);border:1px solid rgba(201,169,89,.5);border-radius:8px;font-size:13px;font-weight:700;color:#d9b56c;padding:8px;">L3 数据层</div>
+      <div style="flex:1;min-width:260px;display:flex;flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:130px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">ROSTER</div><div style="font-size:11px;color:#a9b2bd;">36 角色 · 7 元素 · 血/攻/速</div></div>
+        <div style="flex:1;min-width:130px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">ELEM · TEAM</div><div style="font-size:11px;color:#a9b2bd;">7 元素配色 · 红蓝队</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">REACTIONS</div><div style="font-size:11px;color:#a9b2bd;">8 双元素反应 + 扩散 + 结晶</div></div>
+        <div style="flex:1;min-width:130px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">SKILLS</div><div style="font-size:11px;color:#a9b2bd;">36 角色 × E/Q 技能表</div></div>
+        <div style="flex:1;min-width:180px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">常量</div><div style="font-size:11px;color:#a9b2bd;">能量上限 20 · 战技 5s · 大招 15s · 附着 3.2s · 碰撞冷却 0.5s · 暴击 8%</div></div>
+      </div>
+    </div>
+
+    <!-- L4 引擎核心 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(242,211,137,.18);border:1px solid rgba(242,211,137,.65);border-radius:8px;font-size:13px;font-weight:700;color:#f2d389;padding:8px;">L4 引擎核心<br><span style="font-size:10px;font-weight:400;">Game 类</span></div>
+      <div style="flex:1;min-width:260px;background:linear-gradient(180deg,rgba(242,211,137,.07),rgba(11,20,32,0));border:1px solid rgba(242,211,137,.4);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:13px;font-weight:700;color:#f2d389;margin-bottom:8px;">rAF 主循环 loop（每帧）</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+          <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;">tick</div><div style="font-size:11px;color:#a9b2bd;">物理模拟 · 战斗结算</div></div>
+          <div style="color:#d9b56c;font-weight:700;">→</div>
+          <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;">draw</div><div style="font-size:11px;color:#a9b2bd;">Canvas 渲染全部实体</div></div>
+          <div style="color:#d9b56c;font-weight:700;">→</div>
+          <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-weight:700;font-size:14px;">updateHud</div><div style="font-size:11px;color:#a9b2bd;">血条 / 能量条 / 技能栏同步</div></div>
+        </div>
+        <div style="font-size:11px;color:#a9b2bd;margin-top:8px;">速度 2x（timeScale）· 暂停 · 场地越大球速越快（speedScale 0.75~1.7）· 位置/速度随机初始化</div>
+      </div>
+    </div>
+
+    <!-- L5 战斗子系统 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(201,169,89,.14);border:1px solid rgba(201,169,89,.5);border-radius:8px;font-size:13px;font-weight:700;color:#d9b56c;padding:8px;">L5 子系统</div>
+      <div style="flex:1;min-width:260px;display:flex;flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(224,83,61,.4);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#ff8a72;">碰撞物理</div><div style="font-size:11px;color:#a9b2bd;">弹性反弹 · 同队无伤 · 异队 0.5s 冷却互打</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(127,212,232,.4);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#7fd4e8;">元素反应</div><div style="font-size:11px;color:#a9b2bd;">附着 3.2s · 双向表 · 风扩散 · 岩结晶</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(242,211,137,.45);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#f2d389;">能量系统</div><div style="font-size:11px;color:#a9b2bd;">攻击 +1 · 战技 +5 · 5s 自动 · 满 20 自动大招</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(176,111,216,.4);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#b06fd8;">技能系统</div><div style="font-size:11px;color:#a9b2bd;">castSkill 分发 · 8 手写 + 28 模板组合</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(74,143,224,.4);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#7ab6f5;">投射物</div><div style="font-size:11px;color:#a9b2bd;">直线飞行 · 贯穿 · onHit 爆炸溅射</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.4);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;color:#d9b56c;">击杀 / 胜负</div><div style="font-size:11px;color:#a9b2bd;">eliminate → 播报 → 任队 0 存活 → MVP</div></div>
+      </div>
+    </div>
+
+    <!-- L6 表现层 -->
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;">
+      <div style="flex:0 0 118px;display:flex;align-items:center;justify-content:center;background:rgba(201,169,89,.14);border:1px solid rgba(201,169,89,.5);border-radius:8px;font-size:13px;font-weight:700;color:#d9b56c;padding:8px;">L6 表现层</div>
+      <div style="flex:1;min-width:260px;display:flex;flex-wrap:wrap;gap:8px;">
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">Canvas 特效</div><div style="font-size:11px;color:#a9b2bd;">粒子 · 飘字 · 冲击环 · 受击白闪</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">Web Audio</div><div style="font-size:11px;color:#a9b2bd;">命中 / 击杀 / 战技 / 大招（合成音）</div></div>
+        <div style="flex:1;min-width:150px;background:#122238;border:1px solid rgba(201,169,89,.35);border-radius:8px;padding:8px 10px;"><div style="font-size:13px;font-weight:700;">缺图兜底</div><div style="font-size:11px;color:#a9b2bd;">元素色圆底 + 名首字（选人/HUD/球体/结算）</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 机制链 ===== -->
+  <div style="max-width:980px;margin:22px auto 0;display:flex;flex-wrap:wrap;gap:16px;">
+
+    <!-- 机制 A：能量循环 -->
+    <div style="flex:1;min-width:300px;background:#101d2e;border:1px solid rgba(242,211,137,.45);border-radius:12px;padding:14px;">
+      <div style="font-size:15px;font-weight:700;color:#f2d389;margin-bottom:2px;">机制 A · 元素能量循环</div>
+      <div style="font-size:11px;color:#a9b2bd;margin-bottom:10px;">上限 20 · 全角色统一规则 · 每 5s / 满 20 自动触发</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;">
+        <div style="flex:1;min-width:110px;background:#122238;border:1px solid rgba(242,211,137,.5);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:20px;font-weight:900;color:#f2d389;">+1</div><div style="font-size:11px;color:#a9b2bd;">攻击命中<br>（碰撞 / 技能）</div></div>
+        <div style="color:#d9b56c;font-weight:700;font-size:16px;">→</div>
+        <div style="flex:1;min-width:110px;background:#122238;border:1px solid rgba(242,211,137,.5);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:20px;font-weight:900;color:#f2d389;">+5</div><div style="font-size:11px;color:#a9b2bd;">释放战技 E<br>冷却 5s 自动放</div></div>
+        <div style="color:#d9b56c;font-weight:700;font-size:16px;">→</div>
+        <div style="flex:1;min-width:110px;background:linear-gradient(180deg,rgba(242,211,137,.25),#122238);border:1px solid #f2d389;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#f2d389;">满 20</div><div style="font-size:11px;color:#e8e2d4;">自动释放元素爆发 Q</div></div>
+        <div style="color:#d9b56c;font-weight:700;font-size:16px;">→</div>
+        <div style="flex:1;min-width:110px;background:#122238;border:1px solid rgba(201,169,89,.4);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#a9b2bd;">清零</div><div style="font-size:11px;color:#a9b2bd;">大招 15s 冷却<br>结束自动再放</div></div>
+        <div style="color:#d9b56c;font-weight:700;font-size:16px;">↺</div>
+      </div>
+    </div>
+
+    <!-- 机制 B：伤害结算链 -->
+    <div style="flex:1.2;min-width:300px;background:#101d2e;border:1px solid rgba(224,83,61,.4);border-radius:12px;padding:14px;">
+      <div style="font-size:15px;font-weight:700;color:#ff8a72;margin-bottom:2px;">机制 B · 伤害结算链（dealDamage 统一入口）</div>
+      <div style="font-size:11px;color:#a9b2bd;margin-bottom:10px;">碰撞 / 技能效果 / 爆炸溅射全部汇入；投射物本体命中走直接扣血+附着（不攒能）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;">
+        <div style="flex:1;min-width:100px;background:#122238;border:1px solid rgba(201,169,89,.4);border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;">命中</div><div style="font-size:10px;color:#a9b2bd;">碰撞 / 技能 / 溅射</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:130px;background:#122238;border:1px solid rgba(201,169,89,.4);border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;">基础伤害</div><div style="font-size:10px;color:#a9b2bd;">atk×随机±15%<br>×强化 ×暴击8%</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:120px;background:#122238;border:1px solid rgba(127,212,232,.5);border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#7fd4e8;">元素反应</div><div style="font-size:10px;color:#a9b2bd;">倍率 / 爆炸 / 灼烧<br>易伤 / 护盾 / 击退</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:100px;background:#122238;border:1px solid rgba(201,169,89,.4);border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;">扣血</div><div style="font-size:10px;color:#a9b2bd;">易伤×1.5<br>护盾减半</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:110px;background:#122238;border:1px solid rgba(242,211,137,.5);border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#f2d389;">能量 +1</div><div style="font-size:10px;color:#a9b2bd;">攻击者攒能</div></div>
+        <div style="color:#d9b56c;font-weight:700;">→</div>
+        <div style="flex:1;min-width:120px;background:linear-gradient(180deg,rgba(224,83,61,.2),#122238);border:1px solid #e0533d;border-radius:8px;padding:7px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#ff8a72;">死亡?</div><div style="font-size:10px;color:#a9b2bd;">eliminate 击杀播报<br>→ 胜负判定 → MVP</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部注 -->
+  <div style="max-width:980px;margin:16px auto 0;text-align:center;font-size:11px;color:#6d7a8a;">示意架构图：节点表示源码中真实模块/函数，连线为调用与数据流向</div>
+</div>
+</html>
